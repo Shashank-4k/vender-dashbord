@@ -12,4 +12,5 @@ pyjwt==2.15.1
 python-multipart==0.0.32
 pytest==9.1.1
 requests>=2.31.0
+psycopg2-binary>=2.9.9
 email-validator
