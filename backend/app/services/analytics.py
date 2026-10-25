@@ -577,7 +577,7 @@ def get_sales_analytics(db: Session, vendor_id: Optional[int] = None) -> Dict[st
             AVG(unit_price) AS avg_price
         FROM sales_transactions
         GROUP BY brand, description
-        HAVING sales_qty < 100 AND sales_dollars > 500
+        HAVING SUM(quantity) < 100 AND SUM(total_amount) > 500
         ORDER BY avg_price DESC
         LIMIT 6
     """)
