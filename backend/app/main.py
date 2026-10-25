@@ -48,6 +48,7 @@ app.include_router(performance.router)
 app.include_router(uploads.router)
 app.include_router(reports.router)
 
+@app.get("/health", tags=["Health"])
 @app.get("/api/health", tags=["Health"])
 def health_check(db: Session = Depends(get_db)):
     try:

@@ -1,10 +1,12 @@
 import sys
 import os
 
-# Add backend directory to sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-backend_dir = os.path.join(current_dir, "..", "backend")
-if backend_dir not in sys.path:
-    sys.path.insert(0, os.path.abspath(backend_dir))
+root_dir = os.path.dirname(current_dir)
+backend_dir = os.path.join(root_dir, "backend")
+
+for p in [backend_dir, root_dir, current_dir]:
+    if os.path.exists(p) and p not in sys.path:
+        sys.path.insert(0, p)
 
 from app.main import app
