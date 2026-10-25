@@ -4,7 +4,6 @@ pydantic==2.14.1
 pydantic-settings==2.16.1
 sqlalchemy==2.0.51
 pymysql==1.2.3
-psycopg2-binary>=2.9.9
 cryptography==50.0.2
 pandas>=2.2.0
 numpy>=1.26.0
@@ -13,3 +12,4 @@ pyjwt==2.15.1
 python-multipart==0.0.32
 pytest==9.1.1
 requests>=2.31.0
+email-validator
