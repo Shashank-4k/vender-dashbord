@@ -16,13 +16,19 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS Configuration for React Frontend
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000"
-]
+# Parse CORS Configuration dynamically from environment settings
+raw_origins = settings.CORS_ORIGINS
+if isinstance(raw_origins, str):
+    origins = [orig.strip() for orig in raw_origins.split(",") if orig.strip()]
+elif isinstance(raw_origins, list):
+    origins = [str(orig).strip() for orig in raw_origins if str(orig).strip()]
+else:
+    origins = []
+
+# Preserve standard local development addresses
+for default_origin in ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "http://127.0.0.1:3000"]:
+    if default_origin not in origins:
+        origins.append(default_origin)
 
 app.add_middleware(
     CORSMiddleware,
@@ -64,3 +70,7 @@ def root():
         "docs_url": "/docs",
         "health_check": "/api/health"
     }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=settings.PORT, reload=False)

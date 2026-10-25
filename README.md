@@ -1,45 +1,46 @@
 # Vendor Performance Analytics Web Application
 
-A full-stack, data-driven web application for enterprise supply chain procurement and vendor performance analytics. Built using **React.js (JavaScript/JSX)**, **Tailwind CSS**, **Recharts**, **Python (FastAPI)**, **Pandas**, **SQLAlchemy**, and **MySQL 8.0**.
+A production-ready full-stack web application for enterprise supply chain procurement and vendor performance analytics. Built using **React 19 (JavaScript/JSX)**, **Vite 8**, **Tailwind CSS v4**, **Recharts**, **Python 3.12 (FastAPI)**, **SQLAlchemy 2.0**, **Pandas**, and **MySQL 8.0**.
 
 ---
 
 ## 1. System Architecture & Data Pipeline
 
-The application adheres strictly to the required multi-tier pipeline:
+The application adheres strictly to the multi-tier analytical data pipeline:
 
 ```
-Original Dataset (c:\Users\91938\Downloads\venderdataset)
+Original Procurement Datasets (.csv / .xlsx)
                       ↓
-  Python / Pandas Cleaning & Ingestion Engine
+  Python / Pandas Cleansing & Validation Engine
                       ↓
-           MySQL Relational Database
+          MySQL 8.0 Relational Database
                       ↓
-    Python Analytics & CVPI Scoring Engine
+      Python Statistical & CVPI Scoring Engine
                       ↓
-             FastAPI REST APIs
+      FastAPI REST APIs (with JWT Security)
                       ↓
-     React.js Dashboard & Visualization UI
+   React.js Dashboard & Data Visualization UI
 ```
 
 ---
 
-## 2. Mandatory Technology Stack
+## 2. Technology Stack
 
-| Tier | Technologies Used |
+| Layer | Technologies Used |
 |---|---|
-| **Frontend** | React 19, JavaScript (ES6+), JSX, Tailwind CSS v4, Recharts, Lucide Icons, React Router v7, Axios |
-| **Backend** | Python 3.12, FastAPI, Pandas, NumPy, SciPy, SQLAlchemy 2.0, Pydantic v2, Uvicorn |
-| **Database** | MySQL 8.0 Community Server, PyMySQL driver, SQL DDL Schema |
-| **Testing** | Pytest (Backend API & analytics tests), Vitest & React Testing Library (Frontend UI tests) |
+| **Frontend** | React 19, JavaScript (ES6+), JSX, Vite 8, Tailwind CSS v4, Recharts, Lucide Icons, React Router v7, Axios |
+| **Backend** | Python 3.12, FastAPI, Uvicorn, Pandas, NumPy, SciPy, SQLAlchemy 2.0, Pydantic v2, PyJWT, Bcrypt |
+| **Database** | MySQL 8.0 Community Server / Cloud MySQL, PyMySQL driver, InnoDB storage engine |
+| **Testing** | Pytest (Backend API & analytics suites), Vitest & React Testing Library (Frontend UI test suites) |
+| **Deployment** | Vercel (Frontend SPA), Render / Railway (FastAPI Web Service), Aiven / PlanetScale / Railway (Managed Cloud MySQL) |
 
 ---
 
-## 3. Database Schema Overview (`schema.sql`)
+## 3. Database Schema Overview (`backend/schema.sql`)
 
-The MySQL database `vendor_analytics_db` includes the following 8 relational tables:
+The MySQL database `vendor_analytics_db` includes 8 relational tables:
 
-1. **`users`**: Authentication credentials, names, roles, and salted password hashes.
+1. **`users`**: Authentication credentials, names, roles, and salted bcrypt password hashes.
 2. **`upload_batches`**: Audit tracking of file uploads, rows processed, and validation status.
 3. **`vendors`**: Master vendor directory (vendor number, vendor name, category).
 4. **`purchase_transactions`**: Granular purchase line items (PO number, PO date, receiving date, brand, unit price, quantity, dollars).
@@ -73,71 +74,172 @@ $$\text{CI}_{95\%} = \bar{x} \pm t_{0.025, n-1} \times \frac{s}{\sqrt{n}}$$
 
 ---
 
-## 5. Quick Start Instructions
+## 5. Local Development Setup (Windows PowerShell)
 
 ### Prerequisites
-- Python 3.10+
-- Node.js 18+ and npm
-- MySQL Server 8.0 running on `localhost:3306`
+* **Python 3.10+** (Tested on Python 3.12.3)
+* **Node.js 18+** and **npm** (Tested on Node v24.11.0 / npm 11.6.1)
+* **MySQL 8.0 Server** running on `localhost:3306`
 
-### Step 1: Database Setup
-```bash
-cd backend
-mysql -u root -e "CREATE DATABASE IF NOT EXISTS vendor_analytics_db;"
-mysql -u root vendor_analytics_db < schema.sql
+### Step 1: Clone Repository & Git Safety
+```powershell
+git clone <your-repository-url>
+cd vendor-performance-analytics
+
+# Ensure .env files are never tracked
+git status
 ```
 
-### Step 2: Backend Setup & Seed Dataset
-```bash
+### Step 2: Database Initialization
+```powershell
 cd backend
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS vendor_analytics_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p vendor_analytics_db < schema.sql
+```
+
+### Step 3: Backend Setup & Seed Data
+```powershell
+# Navigate to backend and create virtual environment
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Create .env from template
+Copy-Item .env.example .env
+
+# Populate database with initial dataset and compute CVPI metrics
 python seed_data.py
+
+# Run schema migrations
+python -m app.migrations
+
+# Start FastAPI development server
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-* Backend API documentation available at: **http://127.0.0.1:8000/docs**
-* Health check: **http://127.0.0.1:8000/api/health**
+* Interactive Swagger Docs: **http://127.0.0.1:8000/docs**
+* API Health Check: **http://127.0.0.1:8000/api/health**
 
-### Step 3: Frontend Setup
-```bash
+### Step 4: Frontend Setup
+```powershell
+# In a new PowerShell terminal:
 cd frontend
 npm install
-npm run dev
-```
-* Web Dashboard available at: **http://127.0.0.1:5173/**
 
-### User Registration & Authentication
-* **Sign Up:** Navigate to `http://127.0.0.1:5173/signup` to create a new user account with Full Name, Email, Password, and Password Confirmation.
-* **Sign In:** Navigate to `http://127.0.0.1:5173/login` using your registered credentials.
-* **Security:** Passwords are encrypted using bcrypt hashing (salt rounds: 12) before being stored in MySQL. Authentication utilizes short-lived JWT access tokens and long-lived refresh tokens. No hardcoded or default credentials exist.
+# Start Vite development server
+npm run dev -- --host 127.0.0.1 --port 5173
+```
+* Web Dashboard: **http://127.0.0.1:5173/**
+* Sign Up: **http://127.0.0.1:5173/signup**
+* Sign In: **http://127.0.0.1:5173/login**
 
 ---
 
 ## 6. Running Automated Tests
 
 ### Backend Unit & Integration Tests (Pytest)
-```bash
+```powershell
 cd backend
 python -m pytest
 ```
+*Runs all 28 backend tests covering authentication, vendor management, CVPI scoring, data cleansing, and authenticated report downloads.*
 
-### Frontend Tests (Vitest)
-```bash
+### Frontend Unit & Component Tests (Vitest)
+```powershell
 cd frontend
-npx vitest run
+npm run test
+```
+*Runs 10 component tests covering theme persistence, KPI formatting, login/signup forms, and unified dashboard rendering.*
+
+### Frontend Production Build
+```powershell
+cd frontend
+npm run build
 ```
 
 ---
 
-## 7. Deliverables & Features Status
+## 7. Environment Variables Reference
 
-| Feature | Status | Notes |
-|---|---|---|
-| User Authentication | Complete | JWT tokens, salted hashing, protected routing, login & sign-up |
-| Executive Dashboard | Complete | Live KPI cards, Recharts visualizations, quality notices |
-| Vendor Directory & Scoring | Complete | Search, sorting, pagination, CVPI scoring and ranking |
-| Vendor Detail Scorecard | Complete | PO history, monthly spend trends, top brands supplied |
-| Purchase & Sales Analytics | Complete | Bulk order tiers, Pareto concentration, pricing opportunities |
-| Inventory Analytics | Complete | Begin vs End stock, store valuation, capital locked in unsold stock |
-| Vendor Comparison | Complete | 5-axis Radar chart, Head-to-head table, 95% CI margins, insights |
-| Data Upload & Validation | Complete | 2-step drag-and-drop workflow, duplicate detection, cleaning pipeline |
-| Filtered Reports Export | Complete | Real-time CSV generation matching active filters |
+### Backend (`backend/.env`)
+| Variable Name | Required | Default / Example Value | Description |
+|---|---|---|---|
+| `PROJECT_NAME` | No | `Vendor Performance Analytics` | Application display name |
+| `PORT` | Yes (Cloud) | `8000` | Port for Uvicorn web server |
+| `DATABASE_URL` | **Yes** | `mysql+pymysql://<user>:<password>@<host>:3306/<db>?charset=utf8mb4` | MySQL connection URI |
+| `SECRET_KEY` | **Yes** | `python -c "import secrets; print(secrets.token_hex(32))"` | Cryptographic key for signing JWT tokens |
+| `ALGORITHM` | No | `HS256` | JWT signature algorithm |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | No | `15` | Short-lived access token duration (minutes) |
+| `REFRESH_TOKEN_EXPIRE_DAYS` | No | `7` | Long-lived refresh token duration (days) |
+| `CORS_ORIGINS` | **Yes** | `http://localhost:5173,https://your-app.vercel.app` | Comma-separated allowed frontend origins |
+| `UPLOAD_DIR` | No | `backend/uploads_temp` | Temporary storage for CSV uploads |
+
+### Frontend (`frontend/.env`)
+| Variable Name | Required | Default / Example Value | Description |
+|---|---|---|---|
+| `VITE_API_URL` | **Yes (Cloud)** | `https://your-backend.onrender.com/api` | Full URL to the deployed FastAPI backend API |
+
+*(Note: In local development, leaving `VITE_API_URL` unset automatically proxies `/api` requests to `http://127.0.0.1:8000` via Vite).*
+
+---
+
+## 8. Complete Production Deployment Guide
+
+Deploying the application online involves three simple stages:
+
+```
+[1. Managed Cloud MySQL] ───► [2. FastAPI Backend on Render/Railway] ───► [3. React Frontend on Vercel]
+```
+
+### Stage 1: Cloud MySQL Database Setup
+1. Provision a MySQL 8.0 instance on a managed cloud database provider (**Aiven for MySQL**, **Railway**, or **PlanetScale**).
+2. Note your connection details: Host, Port (`3306`), Username, Password, Database Name (`vendor_analytics_db`).
+3. Import the database schema into the cloud instance:
+   ```powershell
+   mysql -h <cloud-host> -P 3306 -u <user> -p vendor_analytics_db < backend/schema.sql
+   ```
+4. Transfer existing records from your local database:
+   ```powershell
+   # Dump data only (excluding structure)
+   mysqldump -u root -p --no-create-info --complete-insert vendor_analytics_db > backup_data.sql
+   
+   # Import data into cloud database
+   mysql -h <cloud-host> -P 3306 -u <user> -p vendor_analytics_db < backup_data.sql
+   ```
+
+### Stage 2: Backend Deployment (Render or Railway)
+1. In your hosting dashboard (e.g. Render or Railway), create a new **Web Service** connected to your GitHub repository.
+2. Configure settings:
+   * **Root Directory:** `backend`
+   * **Environment:** `Python 3`
+   * **Build Command:** `pip install -r requirements.txt`
+   * **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+3. Add Environment Variables:
+   * `DATABASE_URL`: `mysql+pymysql://<user>:<password>@<cloud-host>:3306/vendor_analytics_db?charset=utf8mb4`
+   * `SECRET_KEY`: `<generate-a-new-random-hex-string>`
+   * `CORS_ORIGINS`: `http://localhost:5173,https://<your-future-vercel-app>.vercel.app`
+   * `ACCESS_TOKEN_EXPIRE_MINUTES`: `15`
+   * `REFRESH_TOKEN_EXPIRE_DAYS`: `7`
+4. Deploy the service and verify: `https://<your-backend>.onrender.com/api/health` should return `{"status": "healthy", "database": "connected"}`.
+
+### Stage 3: Frontend Deployment (Vercel)
+1. In your Vercel Dashboard, click **Add New > Project** and import your GitHub repository.
+2. Configure Project:
+   * **Framework Preset:** `Vite`
+   * **Root Directory:** `frontend`
+   * **Build Command:** `npm run build`
+   * **Output Directory:** `dist`
+3. Add Environment Variable:
+   * `VITE_API_URL`: `https://<your-backend>.onrender.com/api`
+4. Click **Deploy**. Vercel will automatically build the static assets and deploy globally.
+
+### Stage 4: Connect CORS
+1. Once Vercel provides your live frontend domain (e.g., `https://vendor-analytics-web.vercel.app`):
+2. Go to your Render/Railway backend environment variables.
+3. Update `CORS_ORIGINS` to include your exact Vercel URL:
+   ```
+   CORS_ORIGINS=http://localhost:5173,https://vendor-analytics-web.vercel.app
+   ```
+4. Save and restart the backend web service. Your application is now live and fully operational for public users!

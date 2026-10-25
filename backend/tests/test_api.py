@@ -66,3 +66,30 @@ def test_vendor_comparison():
     assert "radar_comparison" in data
     assert "head_to_head_table" in data
     assert len(data["analytical_insights"]) > 0
+
+def test_reports_export_unauthenticated_fails():
+    response = client.get("/api/reports/export?report_type=vendors")
+    assert response.status_code == 401
+
+def test_reports_export_authenticated_via_bearer_and_query_token():
+    from app.database import SessionLocal
+    from app.models import User
+    from app.auth import create_access_token
+
+    db = SessionLocal()
+    user = db.query(User).first()
+    db.close()
+    assert user is not None
+    token = create_access_token(data={"sub": user.email})
+
+    # Test via Authorization Bearer header
+    resp_header = client.get("/api/reports/export?report_type=vendors", headers={"Authorization": f"Bearer {token}"})
+    assert resp_header.status_code == 200
+    assert "text/csv" in resp_header.headers["content-type"]
+    assert "attachment; filename=vendors_report.csv" in resp_header.headers["content-disposition"]
+
+    # Test via query parameter (?token=...)
+    resp_param = client.get(f"/api/reports/export?report_type=vendors&token={token}")
+    assert resp_param.status_code == 200
+    assert "text/csv" in resp_param.headers["content-type"]
+

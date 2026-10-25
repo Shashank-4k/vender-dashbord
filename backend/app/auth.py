@@ -3,7 +3,7 @@ import bcrypt
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Query
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.config import settings
@@ -90,4 +90,45 @@ def require_auth(user: Optional[User] = Depends(get_current_user)) -> User:
 
 def require_admin(user: User = Depends(require_auth)) -> User:
     """Backward compatibility alias for require_auth."""
+    return user
+
+def require_auth_flexible(
+    token: Optional[str] = Query(None, description="Optional access token passed as query parameter for direct downloads"),
+    bearer_token: Optional[str] = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> User:
+    """
+    Enforces authentication via either:
+    1. Standard 'Authorization: Bearer <token>' header.
+    2. 'token=<jwt>' query parameter (for direct browser file download links).
+    Raises HTTP 401 if neither credential is valid.
+    """
+    effective_token = bearer_token or token
+    if not effective_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication credentials were not provided or have expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    payload = decode_token(effective_token, expected_type="access")
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired access token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    email: str = payload.get("sub")
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token payload is invalid",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return user

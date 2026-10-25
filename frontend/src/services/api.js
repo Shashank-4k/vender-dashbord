@@ -1,7 +1,19 @@
 import axios from 'axios';
 
+// Base URL configuration:
+// 1. If VITE_API_URL is provided, normalize it (stripping trailing slashes and ensuring '/api' path).
+// 2. If empty or omitted, defaults to '/api' to utilize the Vite development proxy.
+const rawApiUrl = import.meta.env.VITE_API_URL ? String(import.meta.env.VITE_API_URL).trim() : '';
+const normalizeBaseURL = (url) => {
+  if (!url) return '/api';
+  const stripped = url.replace(/\/+$/, '');
+  return stripped.endsWith('/api') ? stripped : `${stripped}/api`;
+};
+
+export const API_BASE_URL = normalizeBaseURL(rawApiUrl);
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -65,7 +77,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const res = await axios.post('/api/auth/refresh', { refresh_token: refreshToken });
+        const res = await axios.post(`${API_BASE_URL}/auth/refresh`, { refresh_token: refreshToken });
         const { access_token, refresh_token: newRefreshToken, user } = res.data;
         
         localStorage.setItem('vpa_token', access_token);
@@ -101,7 +113,7 @@ export const authAPI = {
   login: (email, password) => api.post('/auth/login', { email, password }),
   signup: (name, email, password, confirmPassword) => 
     api.post('/auth/signup', { name, email, password, confirm_password: confirmPassword }),
-  refreshToken: (refreshToken) => axios.post('/api/auth/refresh', { refresh_token: refreshToken }),
+  refreshToken: (refreshToken) => axios.post(`${API_BASE_URL}/auth/refresh`, { refresh_token: refreshToken }),
   logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me'),
 };
@@ -136,10 +148,16 @@ export const uploadAPI = {
 
 export const reportsAPI = {
   getExportUrl: (reportType, vendorId) => {
-    let url = `/api/reports/export?report_type=${reportType}&format=csv`;
+    const token = localStorage.getItem('vpa_token');
+    let url = `${API_BASE_URL}/reports/export?report_type=${reportType}&format=csv`;
     if (vendorId) url += `&vendor_id=${vendorId}`;
+    if (token) url += `&token=${encodeURIComponent(token)}`;
     return url;
   },
+  downloadReport: (reportType, vendorId) => api.get('/reports/export', {
+    params: { report_type: reportType, vendor_id: vendorId, format: 'csv' },
+    responseType: 'blob',
+  }),
 };
 
 export default api;
