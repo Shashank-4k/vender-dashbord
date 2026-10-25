@@ -12,8 +12,9 @@ from app.routers import (
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="Vendor Performance Analytics REST API powered by FastAPI and MySQL",
-    version="1.0.0"
+    description="Vendor Performance Analytics REST API powered by FastAPI and PostgreSQL",
+    version="1.0.0",
+    redirect_slashes=False
 )
 
 # Parse CORS Configuration dynamically from environment settings
@@ -65,6 +66,9 @@ def health_check(db: Session = Depends(get_db)):
     }
 
 @app.get("/", tags=["Root"])
+@app.get("/api", tags=["Root"])
+@app.get("/api/index", tags=["Root"])
+@app.get("/api/index.py", tags=["Root"])
 def root():
     return {
         "message": "Vendor Performance Analytics API is operational",
