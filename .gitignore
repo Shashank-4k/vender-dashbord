@@ -48,6 +48,8 @@ dist/
 dist-ssr/
 build/
 frontend/dist/
+public/
+!frontend/public/
 
 # Upload staging & temporary files
 backend/uploads_temp/*
