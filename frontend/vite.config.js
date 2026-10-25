@@ -10,7 +10,7 @@ export default defineConfig({
     globals: true,
   },
   build: {
-    outDir: '../public',
+    outDir: '../dist',
     emptyOutDir: true,
   },
   server: {
