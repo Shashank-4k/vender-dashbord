@@ -1,7 +1,0 @@
-{
-  "name": "vendor-analytics-monorepo",
-  "private": true,
-  "scripts": {
-    "build": "npm --prefix frontend run build"
-  }
-}
