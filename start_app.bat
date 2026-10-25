@@ -31,7 +31,7 @@ echo ========================================================
 echo   Application launched successfully!
 echo   Frontend: http://127.0.0.1:5173
 echo   Backend Docs: http://127.0.0.1:8000/docs
-echo   Login: admin@vendoranalytics.com / admin123
+echo   User Sign Up / Login: http://127.0.0.1:5173/login
 echo ========================================================
 echo.
 pause

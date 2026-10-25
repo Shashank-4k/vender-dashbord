@@ -105,9 +105,10 @@ npm run dev
 ```
 * Web Dashboard available at: **http://127.0.0.1:5173/**
 
-### Default Authentication Credentials
-* **Email:** `admin@vendoranalytics.com`
-* **Password:** `admin123`
+### User Registration & Authentication
+* **Sign Up:** Navigate to `http://127.0.0.1:5173/signup` to create a new user account with Full Name, Email, Password, and Password Confirmation.
+* **Sign In:** Navigate to `http://127.0.0.1:5173/login` using your registered credentials.
+* **Security:** Passwords are encrypted using bcrypt hashing (salt rounds: 12) before being stored in MySQL. Authentication utilizes short-lived JWT access tokens and long-lived refresh tokens. No hardcoded or default credentials exist.
 
 ---
 

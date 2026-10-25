@@ -9,7 +9,8 @@ class Settings(BaseSettings):
     )
     SECRET_KEY: str = os.getenv("SECRET_KEY", "super-secret-vendor-analytics-key-2026")
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))  # 15 minutes short-lived
+    REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))  # 7 days refresh token
     DATASET_DIR: str = os.getenv("DATASET_DIR", r"C:\Users\91938\Downloads\venderdataset")
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", os.path.join(os.path.dirname(__file__), "..", "uploads_temp"))
 

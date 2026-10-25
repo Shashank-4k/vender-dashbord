@@ -4,13 +4,17 @@ from pydantic import BaseModel, EmailStr, Field
 
 # ----------------- AUTH SCHEMAS -----------------
 class UserCreate(BaseModel):
-    name: str = Field(..., min_length=2)
+    name: str = Field(..., min_length=2, max_length=150)
     email: EmailStr
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=6, max_length=128)
+    confirm_password: Optional[str] = Field(None, min_length=6, max_length=128)
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
 
 class UserResponse(BaseModel):
     user_id: int
@@ -18,12 +22,14 @@ class UserResponse(BaseModel):
     email: str
     role: str
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
 
 class TokenResponse(BaseModel):
     access_token: str
+    refresh_token: Optional[str] = None
     token_type: str = "bearer"
     user: UserResponse
 

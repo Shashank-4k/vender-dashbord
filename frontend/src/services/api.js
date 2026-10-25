@@ -7,7 +7,7 @@ const api = axios.create({
   },
 });
 
-// Interceptor to attach JWT token
+// Interceptor to attach JWT access token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('vpa_token');
   if (token) {
@@ -16,9 +16,93 @@ api.interceptors.request.use((config) => {
   return config;
 }, (error) => Promise.reject(error));
 
+// Interceptor to handle token refresh automatically on 401 Unauthorized
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Do not attempt refresh on auth endpoints (login, signup, refresh itself)
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
+                           originalRequest.url?.includes('/auth/signup') || 
+                           originalRequest.url?.includes('/auth/refresh');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+      const refreshToken = localStorage.getItem('vpa_refresh_token');
+      if (!refreshToken) {
+        localStorage.removeItem('vpa_token');
+        localStorage.removeItem('vpa_refresh_token');
+        localStorage.removeItem('vpa_user');
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const res = await axios.post('/api/auth/refresh', { refresh_token: refreshToken });
+        const { access_token, refresh_token: newRefreshToken, user } = res.data;
+        
+        localStorage.setItem('vpa_token', access_token);
+        if (newRefreshToken) {
+          localStorage.setItem('vpa_refresh_token', newRefreshToken);
+        }
+        if (user) {
+          localStorage.setItem('vpa_user', JSON.stringify(user));
+        }
+
+        api.defaults.headers.common.Authorization = `Bearer ${access_token}`;
+        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+
+        processQueue(null, access_token);
+        return api(originalRequest);
+      } catch (refreshErr) {
+        processQueue(refreshErr, null);
+        localStorage.removeItem('vpa_token');
+        localStorage.removeItem('vpa_refresh_token');
+        localStorage.removeItem('vpa_user');
+        window.location.href = '/login';
+        return Promise.reject(refreshErr);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export const authAPI = {
   login: (email, password) => api.post('/auth/login', { email, password }),
-  signup: (name, email, password) => api.post('/auth/signup', { name, email, password }),
+  signup: (name, email, password, confirmPassword) => 
+    api.post('/auth/signup', { name, email, password, confirm_password: confirmPassword }),
+  refreshToken: (refreshToken) => axios.post('/api/auth/refresh', { refresh_token: refreshToken }),
+  logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me'),
 };
 

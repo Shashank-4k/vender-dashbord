@@ -22,26 +22,39 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const res = await authAPI.login(email, password);
-    const { access_token, user: userData } = res.data;
+    const { access_token, refresh_token, user: userData } = res.data;
     localStorage.setItem('vpa_token', access_token);
+    if (refresh_token) {
+      localStorage.setItem('vpa_refresh_token', refresh_token);
+    }
     localStorage.setItem('vpa_user', JSON.stringify(userData));
     setUser(userData);
     return userData;
   };
 
-  const signup = async (name, email, password) => {
-    const res = await authAPI.signup(name, email, password);
-    const { access_token, user: userData } = res.data;
+  const signup = async (name, email, password, confirmPassword) => {
+    const res = await authAPI.signup(name, email, password, confirmPassword);
+    const { access_token, refresh_token, user: userData } = res.data;
     localStorage.setItem('vpa_token', access_token);
+    if (refresh_token) {
+      localStorage.setItem('vpa_refresh_token', refresh_token);
+    }
     localStorage.setItem('vpa_user', JSON.stringify(userData));
     setUser(userData);
     return userData;
   };
 
-  const logout = () => {
-    localStorage.removeItem('vpa_token');
-    localStorage.removeItem('vpa_user');
-    setUser(null);
+  const logout = async () => {
+    try {
+      await authAPI.logout();
+    } catch (e) {
+      // Safe fallback if token already expired
+    } finally {
+      localStorage.removeItem('vpa_token');
+      localStorage.removeItem('vpa_refresh_token');
+      localStorage.removeItem('vpa_user');
+      setUser(null);
+    }
   };
 
   return (
