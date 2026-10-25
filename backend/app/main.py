@@ -14,6 +14,9 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Vendor Performance Analytics REST API powered by FastAPI and PostgreSQL",
     version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
     redirect_slashes=False
 )
 
