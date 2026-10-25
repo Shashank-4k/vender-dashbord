@@ -5,15 +5,18 @@ import { BrowserRouter } from 'react-router-dom';
 import SignUp from '../pages/SignUp';
 import Login from '../pages/Login';
 import { AuthProvider } from '../context/AuthContext';
+import { ThemeProvider } from '../context/ThemeContext';
 
 describe('Authentication Pages (SignUp and Login)', () => {
   it('renders SignUp form with all required fields and no default credentials', () => {
     render(
-      <BrowserRouter>
-        <AuthProvider>
-          <SignUp />
-        </AuthProvider>
-      </BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <SignUp />
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
     );
 
     expect(screen.getByText('Create an Account')).toBeDefined();
@@ -27,11 +30,13 @@ describe('Authentication Pages (SignUp and Login)', () => {
 
   it('renders Login form with clean empty inputs and no demo credentials box', () => {
     render(
-      <BrowserRouter>
-        <AuthProvider>
-          <Login />
-        </AuthProvider>
-      </BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Login />
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
     );
 
     expect(screen.getByText('Vendor Performance Analytics')).toBeDefined();
@@ -45,4 +50,5 @@ describe('Authentication Pages (SignUp and Login)', () => {
     expect(screen.queryByText(/admin@vendoranalytics.com/i)).toBeNull();
   });
 });
+
 

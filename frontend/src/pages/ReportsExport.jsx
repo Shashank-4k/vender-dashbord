@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { vendorAPI, reportsAPI } from '../services/api';
-import { FileSpreadsheet, Download, CheckCircle, FileText, Filter } from 'lucide-react';
+import { FileSpreadsheet, Download } from 'lucide-react';
 
 const ReportsExport = () => {
   const [reportType, setReportType] = useState('vendors');
@@ -25,16 +25,16 @@ const ReportsExport = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Custom Reports & Data Export</h1>
-        <p className="text-xs text-slate-500 mt-1">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-[#F1F5F9]">Custom Reports & Data Export</h1>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           Generate filtered, verified CSV extracts directly from the live MySQL database.
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs max-w-2xl">
+      <div className="bg-white dark:bg-[#172033] rounded-2xl border border-slate-200 dark:border-[#293548] p-6 shadow-xs max-w-2xl transition-colors duration-200">
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
               Select Report Dataset
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -48,14 +48,14 @@ const ReportsExport = () => {
                   key={r.id}
                   type="button"
                   onClick={() => setReportType(r.id)}
-                  className={`p-3 text-left rounded-xl border text-xs font-semibold transition ${
+                  className={`p-3 text-left rounded-xl border text-xs font-semibold transition cursor-pointer ${
                     reportType === r.id
-                      ? 'border-indigo-600 bg-indigo-50/60 text-indigo-950'
-                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                      ? 'border-indigo-600 dark:border-blue-500 bg-indigo-50/60 dark:bg-blue-950/40 text-indigo-950 dark:text-blue-200'
+                      : 'border-slate-200 dark:border-[#293548] bg-slate-50 dark:bg-[#111827] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1E293B]'
                   }`}
                 >
                   <div className="flex items-center space-x-2">
-                    <FileSpreadsheet className={`w-4 h-4 ${reportType === r.id ? 'text-indigo-600' : 'text-slate-400'}`} />
+                    <FileSpreadsheet className={`w-4 h-4 ${reportType === r.id ? 'text-indigo-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-400'}`} />
                     <span>{r.label}</span>
                   </div>
                 </button>
@@ -63,19 +63,19 @@ const ReportsExport = () => {
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed">
-            <span className="font-semibold text-slate-800">Report Scope: </span>
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-[#293548] text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            <span className="font-semibold text-slate-800 dark:text-slate-200">Report Scope: </span>
             {reportDescriptions[reportType]}
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
               Filter by Vendor (Optional)
             </label>
             <select
               value={selectedVendor}
               onChange={(e) => setSelectedVendor(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white"
+              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-[#293548] bg-white dark:bg-[#111827] text-slate-900 dark:text-[#F1F5F9] focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-blue-500/20 focus:border-indigo-600 dark:focus:border-blue-500 transition"
             >
               <option value="">All Vendors</option>
               {vendors.map((v) => (
@@ -90,7 +90,7 @@ const ReportsExport = () => {
             <a
               href={exportUrl}
               download={`${reportType}_report.csv`}
-              className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 transition flex items-center justify-center space-x-2"
+              className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 dark:bg-blue-600 dark:hover:bg-blue-500 shadow-md shadow-indigo-600/20 dark:shadow-blue-600/20 transition flex items-center justify-center space-x-2"
             >
               <Download className="w-4 h-4" />
               <span>Download Live CSV Report</span>
@@ -103,3 +103,4 @@ const ReportsExport = () => {
 };
 
 export default ReportsExport;
+

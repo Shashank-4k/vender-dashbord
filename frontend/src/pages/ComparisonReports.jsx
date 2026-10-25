@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { vendorAPI, analyticsAPI } from '../services/api';
+import { useTheme } from '../context/ThemeContext';
+import { getChartConfig } from '../utils/chartTheme';
 import ChartCard from '../components/ChartCard';
 import { 
-  GitCompare, Check, Plus, X, Award, 
-  TrendingUp, Sparkles, AlertCircle, BarChart3 
+  Check, Plus, 
+  Sparkles, AlertCircle 
 } from 'lucide-react';
 import {
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, 
   PolarRadiusAxis, Radar, Legend, Tooltip, BarChart, Bar, XAxis, 
-  YAxis, CartesianGrid, ErrorBar
+  YAxis, CartesianGrid
 } from 'recharts';
 
-const RADAR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6'];
-
 const ComparisonReports = () => {
+  const { isDark } = useTheme();
+  const chartConfig = getChartConfig(isDark);
   const [allVendors, setAllVendors] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [comparisonData, setComparisonData] = useState(null);
@@ -78,15 +80,15 @@ const ComparisonReports = () => {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Multi-Vendor Performance Comparison</h1>
-        <p className="text-xs text-slate-500 mt-1">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-[#F1F5F9]">Multi-Vendor Performance Comparison</h1>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           Objective benchmark evaluating delivery SLA, inventory velocity, and gross commercial profitability.
         </p>
       </div>
 
       {/* Vendor Selector Pill Bar */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+      <div className="bg-white dark:bg-[#172033] rounded-xl border border-slate-200 dark:border-[#293548] p-4 shadow-xs transition-colors duration-200">
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
           Select Vendors for Head-to-Head Comparison (2 to 5 vendors):
         </span>
 
@@ -98,15 +100,15 @@ const ComparisonReports = () => {
                 key={v.vendor_id}
                 type="button"
                 onClick={() => handleToggleVendor(v.vendor_id)}
-                className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
                   isSelected
-                    ? 'bg-indigo-600 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'bg-indigo-600 dark:bg-blue-600 text-white shadow-xs'
+                    : 'bg-slate-100 dark:bg-[#111827] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1E293B] border border-transparent dark:border-[#293548]'
                 }`}
               >
                 {isSelected ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5 opacity-60" />}
                 <span>{v.vendor_name}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-indigo-700' : 'bg-slate-200'}`}>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-indigo-700 dark:bg-blue-700' : 'bg-slate-200 dark:bg-[#1E293B] text-slate-600 dark:text-slate-400'}`}>
                   #{v.vendor_rank}
                 </span>
               </button>
@@ -115,7 +117,7 @@ const ComparisonReports = () => {
         </div>
 
         {error && (
-          <p className="mt-2 text-xs text-rose-600 flex items-center space-x-1">
+          <p className="mt-2 text-xs text-rose-600 dark:text-rose-400 flex items-center space-x-1">
             <AlertCircle className="w-3.5 h-3.5" />
             <span>{error}</span>
           </p>
@@ -124,8 +126,8 @@ const ComparisonReports = () => {
 
       {loading && (
         <div className="p-8 flex flex-col items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600 border-t-transparent mb-2"></div>
-          <p className="text-xs text-slate-500">Calculating head-to-head metrics...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600 dark:border-blue-400 border-t-transparent mb-2"></div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Calculating head-to-head metrics...</p>
         </div>
       )}
 
@@ -141,21 +143,21 @@ const ComparisonReports = () => {
               <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart data={comparisonData.radar_comparison || []}>
-                    <PolarGrid stroke="#e2e8f0" />
-                    <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 11 }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 9 }} />
+                    <PolarGrid stroke={chartConfig.grid.stroke} />
+                    <PolarAngleAxis dataKey="dimension" tick={{ fill: chartConfig.axis.tick.fill, fontSize: 11 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} stroke={chartConfig.grid.stroke} tick={{ fill: chartConfig.axis.tick.fill, fontSize: 9 }} />
                     {(comparisonData.selected_vendors || []).map((v, i) => (
                       <Radar
                         key={v.vendor_id}
                         name={v.vendor_name}
                         dataKey={v.vendor_name}
-                        stroke={RADAR_COLORS[i % RADAR_COLORS.length]}
-                        fill={RADAR_COLORS[i % RADAR_COLORS.length]}
+                        stroke={chartConfig.colors.radar[i % chartConfig.colors.radar.length]}
+                        fill={chartConfig.colors.radar[i % chartConfig.colors.radar.length]}
                         fillOpacity={0.25}
                       />
                     ))}
-                    <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                    <Tooltip contentStyle={{ backgroundColor: '#1e293b', borderRadius: '8px', color: '#fff', fontSize: '12px' }} />
+                    <Legend wrapperStyle={chartConfig.legend.wrapperStyle} />
+                    <Tooltip contentStyle={chartConfig.tooltip.contentStyle} />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
@@ -169,14 +171,14 @@ const ComparisonReports = () => {
               <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={comparisonData.confidence_intervals || []} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="vendor_name" tick={{ fontSize: 10 }} interval={0} angle={-15} textAnchor="end" height={35} />
-                    <YAxis unit="%" tick={{ fontSize: 11 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartConfig.grid.stroke} />
+                    <XAxis dataKey="vendor_name" stroke={chartConfig.axis.stroke} tick={{ fill: chartConfig.axis.tick.fill, fontSize: 10 }} interval={0} angle={-15} textAnchor="end" height={35} />
+                    <YAxis unit="%" stroke={chartConfig.axis.stroke} tick={chartConfig.axis.tick} />
                     <Tooltip
                       formatter={(val) => [`${val}%`, 'Mean Margin']}
-                      contentStyle={{ backgroundColor: '#1e293b', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                      contentStyle={chartConfig.tooltip.contentStyle}
                     />
-                    <Bar dataKey="margin_mean" name="Mean Profit Margin %" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="margin_mean" name="Mean Profit Margin %" fill={chartConfig.colors.primary} radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -184,29 +186,29 @@ const ComparisonReports = () => {
           </div>
 
           {/* Side-by-Side Head-to-Head KPI Table */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
-            <h3 className="text-base font-semibold text-slate-800 mb-1">Side-by-Side KPI Comparison Matrix</h3>
-            <p className="text-xs text-slate-500 mb-4">Detailed metrics across selected vendors</p>
+          <div className="bg-white dark:bg-[#172033] rounded-xl border border-slate-200 dark:border-[#293548] p-5 shadow-xs transition-colors duration-200">
+            <h3 className="text-base font-semibold text-slate-800 dark:text-[#F1F5F9] mb-1">Side-by-Side KPI Comparison Matrix</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Detailed metrics across selected vendors</p>
 
             <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-xs divide-y divide-slate-200">
-                <thead className="bg-slate-50 text-slate-600 font-semibold uppercase">
+              <table className="min-w-full text-left text-xs divide-y divide-slate-200 dark:divide-[#293548]">
+                <thead className="bg-slate-50 dark:bg-[#111827] text-slate-600 dark:text-slate-400 font-semibold uppercase">
                   <tr>
                     <th className="py-3 px-4 w-1/4">Evaluation Metric</th>
                     {(comparisonData.selected_vendors || []).map((v) => (
                       <th key={v.vendor_id} className="py-3 px-4 text-center">
                         <div>
-                          <span className="font-bold text-slate-900 block truncate">{v.vendor_name}</span>
-                          <span className="text-[10px] text-indigo-600 font-medium">Rank #{v.vendor_rank}</span>
+                          <span className="font-bold text-slate-900 dark:text-[#F1F5F9] block truncate">{v.vendor_name}</span>
+                          <span className="text-[10px] text-indigo-600 dark:text-blue-400 font-medium">Rank #{v.vendor_rank}</span>
                         </div>
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-slate-100 dark:divide-[#293548]/60 text-slate-700 dark:text-slate-300">
                   {(comparisonData.head_to_head_table || []).map((row, idx) => (
-                    <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
-                      <td className="py-2.5 px-4 font-semibold text-slate-900">{row.metric}</td>
+                    <tr key={idx} className={idx % 2 === 0 ? 'bg-white dark:bg-[#172033]' : 'bg-slate-50/50 dark:bg-[#111827]/40'}>
+                      <td className="py-2.5 px-4 font-semibold text-slate-900 dark:text-[#F1F5F9]">{row.metric}</td>
                       {(comparisonData.selected_vendors || []).map((v) => (
                         <td key={v.vendor_id} className="py-2.5 px-4 text-center font-mono font-medium">
                           {row[v.vendor_name]}
@@ -220,15 +222,15 @@ const ComparisonReports = () => {
           </div>
 
           {/* Data-Backed Strategic Insights */}
-          <div className="bg-gradient-to-r from-indigo-900 to-slate-900 rounded-xl p-5 text-white shadow-xs">
-            <div className="flex items-center space-x-2 text-indigo-300 font-semibold text-sm mb-3">
+          <div className="bg-gradient-to-r from-indigo-900 to-slate-900 dark:from-[#111827] dark:to-[#172033] rounded-xl p-5 text-white shadow-xs border border-indigo-950/40 dark:border-[#293548] transition-colors duration-200">
+            <div className="flex items-center space-x-2 text-indigo-300 dark:text-blue-400 font-semibold text-sm mb-3">
               <Sparkles className="w-4 h-4 text-amber-400" />
               <span>Data-Backed Procurement Insights</span>
             </div>
             <ul className="space-y-2">
               {(comparisonData.analytical_insights || []).map((insight, idx) => (
-                <li key={idx} className="flex items-start space-x-2 text-xs text-slate-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0"></span>
+                <li key={idx} className="flex items-start space-x-2 text-xs text-slate-200 dark:text-slate-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 dark:bg-blue-400 mt-1.5 flex-shrink-0"></span>
                   <span className="leading-relaxed">{insight}</span>
                 </li>
               ))}
@@ -241,3 +243,4 @@ const ComparisonReports = () => {
 };
 
 export default ComparisonReports;
+
