@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "outputDirectory": "frontend/dist",
+  "outputDirectory": "dist",
   "functions": {
     "api/index.py": {
       "maxDuration": 30
