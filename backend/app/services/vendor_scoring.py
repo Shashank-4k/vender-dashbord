@@ -18,8 +18,8 @@ def calculate_confidence_interval(data: List[float], confidence: float = 0.95) -
     if std_err == 0:
         return mean_val, mean_val, mean_val
 
-    h = std_err * stats.t.ppf((1 + confidence) / 2.0, n - 1)
-    return round(mean_val, 2), round(mean_val - h, 2), round(mean_val + h, 2)
+    h = float(std_err * stats.t.ppf((1 + confidence) / 2.0, n - 1))
+    return round(float(mean_val), 2), round(float(mean_val - h), 2), round(float(mean_val + h), 2)
 
 def calculate_vendor_composite_score(
     spend: float,

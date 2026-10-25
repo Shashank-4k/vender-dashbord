@@ -301,14 +301,16 @@ def recompute_vendor_summary_metrics(db: Session):
     inv_rows = {r.vendor_id: r for r in db.execute(invoice_sql)}
 
     # 2. Purchase aggregations & delivery lead time
-    purchases_sql = text("""
+    is_pg = db.bind.dialect.name == "postgresql"
+    datediff_expr = "(actual_delivery_date - po_date)" if is_pg else "DATEDIFF(actual_delivery_date, po_date)"
+    purchases_sql = text(f"""
         SELECT 
             vendor_id,
             SUM(total_amount) AS purchase_dollars,
             SUM(quantity) AS purchase_quantity,
             COUNT(DISTINCT po_number) AS po_count,
             AVG(CASE WHEN actual_delivery_date IS NOT NULL AND po_date IS NOT NULL 
-                     THEN DATEDIFF(actual_delivery_date, po_date) END) AS avg_delivery_days,
+                     THEN {datediff_expr} END) AS avg_delivery_days,
             SUM(CASE WHEN actual_delivery_date <= expected_delivery_date THEN 1 ELSE 0 END) AS on_time_orders,
             COUNT(CASE WHEN actual_delivery_date IS NOT NULL THEN 1 END) AS delivered_orders,
             SUM(defect_quantity) AS total_defects
@@ -446,8 +448,8 @@ def recompute_vendor_summary_metrics(db: Session):
             defect_rate=m["defect_rate"],
             vendor_score=m["vendor_score"],
             vendor_rank=m["vendor_rank"],
-            ci_lower=m["ci_lower"],
-            ci_upper=m["ci_upper"]
+            ci_lower=float(m["ci_lower"]) if m["ci_lower"] is not None else None,
+            ci_upper=float(m["ci_upper"]) if m["ci_upper"] is not None else None
         )
         for m in vendor_metrics_list
     ]

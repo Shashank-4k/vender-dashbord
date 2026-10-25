@@ -7,6 +7,11 @@ from app.models import (
 )
 from app.services.vendor_scoring import calculate_confidence_interval
 
+def _format_month_expr(col_name: str, db: Session) -> str:
+    if db.bind.dialect.name == "postgresql":
+        return f"TO_CHAR({col_name}, 'YYYY-MM')"
+    return f"DATE_FORMAT({col_name}, '%Y-%m')"
+
 def get_dashboard_summary(db: Session, vendor_id: Optional[int] = None, category: Optional[str] = None) -> Dict[str, Any]:
     query = db.query(VendorSummaryMetrics)
     if vendor_id:
@@ -81,14 +86,15 @@ def get_dashboard_summary(db: Session, vendor_id: Optional[int] = None, category
     ]
 
     # Monthly procurement spend trend from purchase_transactions or vendor_invoices
-    monthly_sql = text("""
+    m_expr = _format_month_expr("po_date", db)
+    monthly_sql = text(f"""
         SELECT 
-            DATE_FORMAT(po_date, '%Y-%m') AS month_str,
+            {m_expr} AS month_str,
             COUNT(DISTINCT po_number) AS po_count,
             SUM(total_amount) AS total_dollars,
             SUM(quantity) AS total_qty
         FROM vendor_invoices
-        GROUP BY DATE_FORMAT(po_date, '%Y-%m')
+        GROUP BY {m_expr}
         ORDER BY month_str ASC
         LIMIT 12
     """)
@@ -281,15 +287,16 @@ def get_vendor_detail(db: Session, vendor_id: int) -> Optional[Dict[str, Any]]:
     ]
 
     # Monthly trends for this vendor
-    monthly_sql = text("""
+    m_expr = _format_month_expr("po_date", db)
+    monthly_sql = text(f"""
         SELECT 
-            DATE_FORMAT(po_date, '%Y-%m') AS month_str,
+            {m_expr} AS month_str,
             COUNT(po_number) AS orders,
             SUM(total_amount) AS spend,
             SUM(freight) AS freight
         FROM vendor_invoices
         WHERE vendor_id = :v_id
-        GROUP BY DATE_FORMAT(po_date, '%Y-%m')
+        GROUP BY {m_expr}
         ORDER BY month_str ASC
     """)
     month_rows = db.execute(monthly_sql, {"v_id": vendor_id}).fetchall()
@@ -426,13 +433,14 @@ def get_purchasing_analytics(db: Session, vendor_id: Optional[int] = None) -> Di
         })
 
     # Monthly spend trend
-    month_sql = text("""
+    m_expr = _format_month_expr("po_date", db)
+    month_sql = text(f"""
         SELECT 
-            DATE_FORMAT(po_date, '%Y-%m') AS month_str,
+            {m_expr} AS month_str,
             SUM(total_amount) AS spend,
             COUNT(po_number) AS orders
         FROM vendor_invoices
-        GROUP BY DATE_FORMAT(po_date, '%Y-%m')
+        GROUP BY {m_expr}
         ORDER BY month_str ASC
         LIMIT 12
     """)
@@ -502,13 +510,14 @@ def get_sales_analytics(db: Session, vendor_id: Optional[int] = None) -> Dict[st
     avg_margin = round(gross_profit / total_sales * 100.0, 2) if total_sales > 0 else 0.0
 
     # Monthly sales trend
-    sales_month_sql = text("""
+    m_expr = _format_month_expr("sale_date", db)
+    sales_month_sql = text(f"""
         SELECT 
-            DATE_FORMAT(sale_date, '%Y-%m') AS month_str,
+            {m_expr} AS month_str,
             SUM(total_amount) AS sales_dollars,
             SUM(quantity) AS sales_qty
         FROM sales_transactions
-        GROUP BY DATE_FORMAT(sale_date, '%Y-%m')
+        GROUP BY {m_expr}
         ORDER BY month_str ASC
         LIMIT 12
     """)
